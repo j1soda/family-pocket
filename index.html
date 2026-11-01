@@ -580,10 +580,21 @@
 
       <!-- Charts & Dual-Income Breakdown -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div class="lg:col-span-5 bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-          <h3 class="text-sm font-bold text-slate-900">🍩 대분류 카테고리별 지출 비중</h3>
-          <div class="h-60 flex items-center justify-center">
-            <canvas id="categoryChartCanvas"></canvas>
+        <div class="lg:col-span-5 bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-2.5">
+          <h3 class="text-sm font-bold text-slate-900">🍩 구성원별 & 세부 항목별 지출 비중</h3>
+          <div class="grid grid-cols-2 gap-2 mob-grid-2 items-center">
+            <div class="flex flex-col items-center min-w-0">
+              <span class="text-[11px] font-bold text-slate-600 mb-1 whitespace-nowrap">구성원별 (5대 항목)</span>
+              <div class="w-full h-52 flex items-center justify-center relative">
+                <canvas id="categoryChartCanvas"></canvas>
+              </div>
+            </div>
+            <div class="flex flex-col items-center min-w-0">
+              <span class="text-[11px] font-bold text-slate-600 mb-1 whitespace-nowrap">지출 세부 항목별</span>
+              <div class="w-full h-52 flex items-center justify-center relative">
+                <canvas id="subcategoryChartCanvas"></canvas>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1502,23 +1513,38 @@ AppShell (Wide / Mobile Adaptive)
       <form id="addRecurringForm" class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
         <div class="font-bold text-slate-800">+ 새 정기 항목 추가</div>
         <div class="grid grid-cols-3 gap-2">
-          <select id="recType" class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold">
+          <select id="recType" class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold bg-white">
             <option value="EXPENSE">고정지출</option>
             <option value="INCOME">고정수입</option>
           </select>
-          <input type="number" id="recDay" min="1" max="31" value="25" placeholder="매월 일자" class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold">
-          <input type="text" id="recAmount" inputmode="numeric" placeholder="금액(원)" required class="rounded-lg border border-slate-200 px-2 py-1.5 font-bold">
+          <input type="number" id="recDay" min="1" max="31" value="25" placeholder="매월 일자" class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold bg-white">
+          <input type="text" id="recAmount" inputmode="numeric" placeholder="금액(원)" required class="rounded-lg border border-slate-200 px-2 py-1.5 font-bold bg-white">
         </div>
         <div class="grid grid-cols-2 gap-2">
-          <input type="text" id="recTitle" placeholder="항목명 (예: 아파트 관리비)" required class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold">
-          <select id="recCategory" class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold">
+          <input type="text" id="recTitle" placeholder="항목명 (예: 아파트 관리비)" required class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold bg-white">
+          <select id="recCategory" class="rounded-lg border border-slate-200 px-2 py-1.5 font-semibold bg-white">
             <option value="고정지출">고정지출</option>
+            <option value="변동지출">변동지출</option>
             <option value="첫째">첫째</option>
             <option value="둘째">둘째</option>
+            <option value="부부 개인">부부 개인</option>
             <option value="수입">수입</option>
           </select>
         </div>
-        <button type="submit" class="w-full py-1.5 rounded-lg bg-indigo-600 text-white font-bold">+ 정기 항목에 추가</button>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-0.5">결제수단 구분</label>
+            <select id="recPayMode" class="w-full rounded-lg border border-slate-200 px-2 py-1.5 font-semibold bg-white">
+              <option value="CARD">💳 등록된 카드</option>
+              <option value="CASH">💵 현금/계좌이체</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-0.5">카드 / 현금 세부 선택</label>
+            <select id="recMethodName" class="w-full rounded-lg border border-slate-200 px-2 py-1.5 font-semibold bg-white"></select>
+          </div>
+        </div>
+        <button type="submit" class="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold">+ 정기 항목에 추가</button>
       </form>
     </div>
   </div>
@@ -1736,6 +1762,7 @@ service cloud.firestore {
     let mobileFontScale = Number(localStorage.getItem('fp_mobile_font_scale')) || 1.0;
 
     let categoryChartInstance = null;
+    let subcategoryChartInstance = null;
     let cardSplitChartInstance = null;
     let monthlyFlowChartInstance = null;
     let monthlySubTrendChartInstance = null;
@@ -2111,7 +2138,7 @@ service cloud.firestore {
       });
 
       setTimeout(() => {
-        [categoryChartInstance, cardSplitChartInstance, monthlyFlowChartInstance, monthlySubTrendChartInstance].forEach(ch => {
+        [categoryChartInstance, subcategoryChartInstance, cardSplitChartInstance, monthlyFlowChartInstance, monthlySubTrendChartInstance].forEach(ch => {
           if (ch && typeof ch.resize === 'function') ch.resize();
         });
       }, 40);
@@ -2154,6 +2181,7 @@ service cloud.firestore {
 
       updateMethodOptions('formPayMode', 'formMethodName');
       updateMethodOptions('editTxPayMode', 'editTxMethodName');
+      updateMethodOptions('recPayMode', 'recMethodName');
 
       const cats = currentFormType === 'INCOME' ? ['수입'] : ['고정지출', '변동지출', '첫째', '둘째', '부부 개인'];
       const formCat = document.getElementById('formCategory');
@@ -2305,9 +2333,23 @@ service cloud.firestore {
       renderDashboardCharts(expenses, cardExp, cashExp);
     }
 
+    function getExpenseMemberBucket(t) {
+      if (t.category === '첫째' || t.owner === '첫째') return '첫째';
+      if (t.category === '둘째' || t.owner === '둘째') return '둘째';
+      if (t.owner === '남편' || t.subcategory === '남편 용돈') return '남편';
+      if (t.owner === '아내' || t.subcategory === '아내 용돈') return '아내';
+      return '공통';
+    }
+
     function renderDashboardCharts(expenses, cardExp, cashExp) {
-      const cats = ['고정지출', '변동지출', '첫째', '둘째', '부부 개인'];
-      const catData = cats.map(c => expenses.filter(t => t.category === c).reduce((s, t) => s + t.amount, 0));
+      // 1. 구성원별 지출 원그래프 (남편, 아내, 첫째, 둘째, 공통 5가지 항목)
+      const memberLabels = ['남편', '아내', '첫째', '둘째', '공통'];
+      const memberTotals = { '남편': 0, '아내': 0, '첫째': 0, '둘째': 0, '공통': 0 };
+      expenses.forEach(t => {
+        const bucket = getExpenseMemberBucket(t);
+        memberTotals[bucket] = (memberTotals[bucket] || 0) + t.amount;
+      });
+      const memberData = memberLabels.map(m => memberTotals[m]);
 
       const ctx1 = document.getElementById('categoryChartCanvas');
       if (ctx1) {
@@ -2315,18 +2357,81 @@ service cloud.firestore {
         categoryChartInstance = new Chart(ctx1, {
           type: 'doughnut',
           data: {
-            labels: cats,
+            labels: memberLabels,
             datasets: [{
-              data: catData,
-              backgroundColor: ['#4f46e5', '#0ea5e9', '#38bdf8', '#f59e0b', '#a855f7'],
-              borderWidth: 2,
+              data: memberData,
+              backgroundColor: ['#4f46e5', '#a855f7', '#0ea5e9', '#f59e0b', '#10b981'],
+              borderWidth: 1.5,
               borderColor: '#ffffff'
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
+            cutout: '56%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { boxWidth: 9, padding: 6, font: { size: 10 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    return ` ${ctx.label}: ${formatKRW(ctx.parsed)}`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // 2. 지출 카테고리의 세부 항목별 원그래프 (주거비/대출이자, 통신/인터넷, 식비/장보기 등)
+      const subMap = {};
+      expenses.forEach(t => {
+        const subName = (t.subcategory || t.category || '기타').trim();
+        subMap[subName] = (subMap[subName] || 0) + t.amount;
+      });
+      const subEntries = Object.entries(subMap).sort((a, b) => b[1] - a[1]);
+      const subLabels = subEntries.length ? subEntries.map(e => e[0]) : ['내역 없음'];
+      const subData = subEntries.length ? subEntries.map(e => e[1]) : [0];
+      const subPalette = [
+        '#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#f43f5e',
+        '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316',
+        '#6366f1', '#14b8a6', '#eab308', '#64748b'
+      ];
+
+      const ctxSub = document.getElementById('subcategoryChartCanvas');
+      if (ctxSub) {
+        if (subcategoryChartInstance) subcategoryChartInstance.destroy();
+        subcategoryChartInstance = new Chart(ctxSub, {
+          type: 'doughnut',
+          data: {
+            labels: subLabels,
+            datasets: [{
+              data: subData,
+              backgroundColor: subLabels.map((_, i) => subPalette[i % subPalette.length]),
+              borderWidth: 1.5,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '56%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { boxWidth: 8, padding: 5, font: { size: 9.5 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    return ` ${ctx.label}: ${formatKRW(ctx.parsed)}`;
+                  }
+                }
+              }
+            }
           }
         });
       }
@@ -2404,13 +2509,22 @@ service cloud.firestore {
       document.getElementById('txFilterCountText').textContent = `조건 일치 내역: 총 ${filtered.length}건`;
       document.getElementById('txFullTableBody').innerHTML = filtered.map(t => buildTransactionRowHtml(t)).join('');
 
-      // Recurring summary
+      // Recurring summary with inline Card / Cash selector
       const recBox = document.getElementById('recurringSummaryList');
       if (recBox) {
         recBox.innerHTML = stateRecurring.map(r => `
-          <div class="flex items-center justify-between py-1 border-b border-slate-100">
-            <span>매월 ${r.day}일 · <strong>${r.title}</strong> (${r.category})</span>
-            <span class="${r.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'} font-bold">${formatKRW(r.amount)}</span>
+          <div class="flex flex-wrap items-center justify-between gap-1.5 py-1.5 border-b border-slate-100">
+            <div class="min-w-0">
+              <span class="font-bold text-slate-800">${r.day}일 · ${r.title}</span>
+              <span class="text-[10px] text-slate-400 ml-1">(${r.category})</span>
+            </div>
+            <div class="flex items-center gap-1.5 ml-auto shrink-0">
+              <select onchange="updateRecurringPayment('${r.id}', this.value)"
+                      class="rounded-lg border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-700 max-w-[140px]">
+                ${buildRecurringMethodOptionsHtml(r.payMode, r.methodName)}
+              </select>
+              <span class="${r.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'} font-extrabold whitespace-nowrap">${formatKRW(r.amount)}</span>
+            </div>
           </div>
         `).join('');
       }
@@ -3146,7 +3260,7 @@ service cloud.firestore {
         btnMob.className = 'px-2.5 py-1 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition';
       }
       setTimeout(() => {
-        [categoryChartInstance, cardSplitChartInstance, monthlyFlowChartInstance, monthlySubTrendChartInstance].forEach(ch => {
+        [categoryChartInstance, subcategoryChartInstance, cardSplitChartInstance, monthlyFlowChartInstance, monthlySubTrendChartInstance].forEach(ch => {
           if (ch && typeof ch.resize === 'function') ch.resize();
         });
       }, 60);
@@ -3185,7 +3299,7 @@ service cloud.firestore {
       });
 
       setTimeout(() => {
-        [categoryChartInstance, cardSplitChartInstance, monthlyFlowChartInstance, monthlySubTrendChartInstance].forEach(ch => {
+        [categoryChartInstance, subcategoryChartInstance, cardSplitChartInstance, monthlyFlowChartInstance, monthlySubTrendChartInstance].forEach(ch => {
           if (ch && typeof ch.resize === 'function') ch.resize();
         });
       }, 40);
@@ -3581,23 +3695,29 @@ service cloud.firestore {
       });
 
       // Recurring Modal & Batch Apply
+      document.getElementById('recPayMode').addEventListener('change', () => updateMethodOptions('recPayMode', 'recMethodName'));
       document.getElementById('btnOpenRecurringModal').addEventListener('click', () => {
+        updateMethodOptions('recPayMode', 'recMethodName');
         renderRecurringModalList();
         document.getElementById('recurringModal').classList.remove('hidden');
       });
       document.getElementById('btnCloseRecurringModal').addEventListener('click', () => document.getElementById('recurringModal').classList.add('hidden'));
       document.getElementById('addRecurringForm').addEventListener('submit', e => {
         e.preventDefault();
+        const catVal = document.getElementById('recCategory').value;
+        const defaultSub = (CATEGORY_MAP[catVal] && CATEGORY_MAP[catVal][0]) || '정기항목';
+        const payModeVal = document.getElementById('recPayMode').value || 'CASH';
+        const methodVal = document.getElementById('recMethodName').value || (payModeVal === 'CARD' && stateCards[0] ? stateCards[0].name : '현금');
         stateRecurring.push({
           id: 'r_' + Date.now(),
           type: document.getElementById('recType').value,
           day: Number(document.getElementById('recDay').value) || 25,
           title: document.getElementById('recTitle').value.trim(),
-          category: document.getElementById('recCategory').value,
-          subcategory: '정기항목',
-          owner: '가족공통',
-          payMode: 'CASH',
-          methodName: '자동이체',
+          category: catVal,
+          subcategory: defaultSub,
+          owner: catVal === '첫째' ? '첫째' : (catVal === '둘째' ? '둘째' : '가족공통'),
+          payMode: payModeVal,
+          methodName: methodVal,
           amount: parseCommaNumber(document.getElementById('recAmount').value)
         });
         document.getElementById('recTitle').value = '';
@@ -3605,6 +3725,7 @@ service cloud.firestore {
         saveState();
         renderRecurringModalList();
         renderAll();
+        showToast('정기 항목이 추가되었습니다.');
       });
 
       document.getElementById('btnApplyRecurringBatch').addEventListener('click', () => {
@@ -3762,15 +3883,49 @@ service cloud.firestore {
       document.getElementById('smsJsonOutput').textContent = JSON.stringify(lastParsedSmsObject, null, 2);
     }
 
+    function buildRecurringMethodOptionsHtml(selectedMode, selectedMethod) {
+      const cashMethods = ['현금', '자동이체', '계좌이체', '지역화폐', '급여통장', '행복출산계좌'];
+      const cardOpts = stateCards.map(c => {
+        const val = `CARD::${c.name}`;
+        const isSel = selectedMode === 'CARD' && selectedMethod === c.name;
+        return `<option value="${val}" ${isSel ? 'selected' : ''}>💳 ${c.name}</option>`;
+      }).join('');
+      const cashOpts = cashMethods.map(m => {
+        const val = `CASH::${m}`;
+        const isSel = selectedMode === 'CASH' && selectedMethod === m;
+        return `<option value="${val}" ${isSel ? 'selected' : ''}>💵 ${m}</option>`;
+      }).join('');
+      return `<optgroup label="등록된 카드">${cardOpts}</optgroup><optgroup label="현금 / 계좌">${cashOpts}</optgroup>`;
+    }
+
+    window.updateRecurringPayment = function(id, combinedVal) {
+      const item = stateRecurring.find(r => r.id === id);
+      if (!item || !combinedVal) return;
+      const parts = combinedVal.split('::');
+      item.payMode = parts[0] || 'CASH';
+      item.methodName = parts[1] || '현금';
+      saveState();
+      renderRecurringModalList();
+      renderTransactionsTab();
+      showToast(`'${item.title}' 결제수단이 [${item.methodName}](으)로 변경되었습니다.`);
+    };
+
     function renderRecurringModalList() {
       const box = document.getElementById('recurringModalList');
+      if (!box) return;
       box.innerHTML = stateRecurring.map(r => `
-        <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-          <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="min-w-0">
             <span class="font-bold text-slate-900">매월 ${r.day}일 · ${r.title}</span>
             <span class="text-slate-500 ml-1">(${r.category} · ${formatKRW(r.amount)})</span>
           </div>
-          <button type="button" onclick="deleteRecurringItem('${r.id}')" class="text-rose-600 font-bold hover:underline">삭제</button>
+          <div class="flex items-center gap-2 ml-auto shrink-0">
+            <select onchange="updateRecurringPayment('${r.id}', this.value)"
+                    class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-700">
+              ${buildRecurringMethodOptionsHtml(r.payMode, r.methodName)}
+            </select>
+            <button type="button" onclick="deleteRecurringItem('${r.id}')" class="text-rose-600 font-bold hover:underline whitespace-nowrap shrink-0">삭제</button>
+          </div>
         </div>
       `).join('');
     }
