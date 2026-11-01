@@ -1816,6 +1816,18 @@ service cloud.firestore {
       if (stateProfile && stateProfile.monthLabel === '2025년 5월') {
         stateProfile.monthLabel = '2026년 11월';
       }
+      // Normalize any expense transactions where owner is 첫째/둘째 or category is 첫째/둘째 so Baby Tracker stays 100% synced
+      (stateTransactions || []).forEach(t => {
+        if (t && t.type === 'EXPENSE') {
+          if (t.owner === '첫째' || t.category === '첫째') {
+            t.owner = '첫째';
+            t.category = '첫째';
+          } else if (t.owner === '둘째' || t.category === '둘째') {
+            t.owner = '둘째';
+            t.category = '둘째';
+          }
+        }
+      });
     }
 
     function buildFullBackupPayload() {
@@ -2237,8 +2249,60 @@ service cloud.firestore {
       const catEl = document.getElementById(catSelectId);
       const subEl = document.getElementById(subSelectId);
       if (!catEl || !subEl) return;
+      const prevSub = subEl.value;
       const list = CATEGORY_MAP[catEl.value] || ['기타'];
       subEl.innerHTML = list.map(s => `<option value="${s}">${s}</option>`).join('');
+      if (prevSub && list.includes(prevSub)) {
+        subEl.value = prevSub;
+      }
+    }
+
+    function syncOwnerToCategoryAndSub(ownerSelectId, catSelectId, subSelectId, isMainForm = false) {
+      const ownerEl = document.getElementById(ownerSelectId);
+      const catEl = document.getElementById(catSelectId);
+      if (!ownerEl || !catEl) return;
+      const ownerVal = ownerEl.value;
+
+      if (ownerVal === '첫째' || ownerVal === '둘째') {
+        // Ensure Expense mode is active when selecting 첫째 or 둘째 so baby categories are available
+        if (isMainForm && currentFormType === 'INCOME') {
+          currentFormType = 'EXPENSE';
+          document.getElementById('btnFormTypeExpense').className = 'py-2 rounded-lg text-xs font-extrabold bg-rose-600 text-white shadow-xs transition';
+          document.getElementById('btnFormTypeIncome').className = 'py-2 rounded-lg text-xs font-extrabold text-slate-600 hover:text-slate-900 transition';
+          const cats = ['고정지출', '변동지출', '첫째', '둘째', '부부 개인'];
+          catEl.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        } else if (!isMainForm) {
+          const editTypeEl = document.getElementById('editTxType');
+          if (editTypeEl && editTypeEl.value === 'INCOME') editTypeEl.value = 'EXPENSE';
+        }
+        catEl.value = ownerVal;
+        updateSubcategorySelect(catSelectId, subSelectId);
+      } else if (ownerVal === '정부지원금') {
+        if (Array.from(catEl.options).some(o => o.value === '수입')) {
+          catEl.value = '수입';
+          updateSubcategorySelect(catSelectId, subSelectId);
+        }
+      } else {
+        // If changing away from 첫째/둘째 to 남편/아내/가족공통 while category was still 첫째/둘째
+        if (catEl.value === '첫째' || catEl.value === '둘째') {
+          const fallbackCat = (ownerVal === '남편' || ownerVal === '아내') ? '부부 개인' : '변동지출';
+          if (Array.from(catEl.options).some(o => o.value === fallbackCat)) {
+            catEl.value = fallbackCat;
+            updateSubcategorySelect(catSelectId, subSelectId);
+          }
+        }
+      }
+    }
+
+    function syncCategoryToOwnerAndSub(catSelectId, ownerSelectId, subSelectId) {
+      const catEl = document.getElementById(catSelectId);
+      const ownerEl = document.getElementById(ownerSelectId);
+      if (catEl && ownerEl) {
+        if (catEl.value === '첫째' || catEl.value === '둘째') {
+          ownerEl.value = catEl.value;
+        }
+      }
+      updateSubcategorySelect(catSelectId, subSelectId);
     }
 
     // Dashboard Rendering
@@ -2255,8 +2319,8 @@ service cloud.firestore {
       const cardExp = expenses.filter(t => t.payMode === 'CARD').reduce((s, t) => s + t.amount, 0);
       const cashExp = expenses.filter(t => t.payMode === 'CASH').reduce((s, t) => s + t.amount, 0);
 
-      const firstExp = expenses.filter(t => t.category === '첫째').reduce((s, t) => s + t.amount, 0);
-      const secondExp = expenses.filter(t => t.category === '둘째').reduce((s, t) => s + t.amount, 0);
+      const firstExp = expenses.filter(t => t.category === '첫째' || t.owner === '첫째').reduce((s, t) => s + t.amount, 0);
+      const secondExp = expenses.filter(t => t.category === '둘째' || t.owner === '둘째').reduce((s, t) => s + t.amount, 0);
       const babyTotal = firstExp + secondExp;
 
       const netSavings = totalIncome - totalExpense;
@@ -2285,7 +2349,7 @@ service cloud.firestore {
       const budgetCats = ['고정지출', '변동지출', '첫째', '둘째', '부부 개인'];
       const bGrid = document.getElementById('budgetTrafficLightGrid');
       bGrid.innerHTML = budgetCats.map(cat => {
-        const spent = expenses.filter(t => t.category === cat).reduce((s, t) => s + t.amount, 0);
+        const spent = expenses.filter(t => t.category === cat || ((cat === '첫째' || cat === '둘째') && t.owner === cat)).reduce((s, t) => s + t.amount, 0);
         const limit = stateBudgets[cat] || 500000;
         const pct = limit > 0 ? Math.round((spent / limit) * 100) : 0;
         let badgeHtml = `<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">🟢 안정 (${pct}%)</span>`;
@@ -2550,8 +2614,8 @@ service cloud.firestore {
         else {
           txByMonth[ym].expense += t.amount;
           if (t.payMode === 'CARD') txByMonth[ym].card += t.amount;
-          if (t.category === '첫째') txByMonth[ym].first += t.amount;
-          if (t.category === '둘째') txByMonth[ym].second += t.amount;
+          if (t.category === '첫째' || t.owner === '첫째') txByMonth[ym].first += t.amount;
+          if (t.category === '둘째' || t.owner === '둘째') txByMonth[ym].second += t.amount;
         }
       });
 
@@ -2848,7 +2912,7 @@ service cloud.firestore {
     }
 
     function renderSingleChildTracker(catKey, totalElId, gridElId, tableElId, colorTheme) {
-      const txs = stateTransactions.filter(t => t.type === 'EXPENSE' && t.category === catKey).sort((a, b) => b.date.localeCompare(a.date));
+      const txs = stateTransactions.filter(t => t.type === 'EXPENSE' && (t.category === catKey || t.owner === catKey)).sort((a, b) => b.date.localeCompare(a.date));
       const total = txs.reduce((s, t) => s + t.amount, 0);
       document.getElementById(totalElId).textContent = formatKRW(total);
 
@@ -2974,8 +3038,8 @@ service cloud.firestore {
       const netSavings = totalInc - totalExp;
       const savingsRate = totalInc > 0 ? Math.round((netSavings / totalInc) * 100) : 0;
 
-      const firstExp = expenses.filter(t => t.category === '첫째').reduce((s, t) => s + t.amount, 0);
-      const secondExp = expenses.filter(t => t.category === '둘째').reduce((s, t) => s + t.amount, 0);
+      const firstExp = expenses.filter(t => t.category === '첫째' || t.owner === '첫째').reduce((s, t) => s + t.amount, 0);
+      const secondExp = expenses.filter(t => t.category === '둘째' || t.owner === '둘째').reduce((s, t) => s + t.amount, 0);
       const govSupport = incomes.filter(t => t.owner === '정부지원금').reduce((s, t) => s + t.amount, 0);
 
       const targetBirthBudget = parseCommaNumber(document.getElementById('cfpTargetBirthBudget').value) || stateProfile.targetBirthBudget || 4500000;
@@ -3392,21 +3456,37 @@ service cloud.firestore {
         populateDynamicFormSelects();
       });
 
+      document.getElementById('formOwner').addEventListener('change', () => {
+        syncOwnerToCategoryAndSub('formOwner', 'formCategory', 'formSubcategory', true);
+      });
+      document.getElementById('editTxOwner').addEventListener('change', () => {
+        syncOwnerToCategoryAndSub('editTxOwner', 'editTxCategory', 'editTxSubcategory', false);
+      });
       document.getElementById('formPayMode').addEventListener('change', () => updateMethodOptions('formPayMode', 'formMethodName'));
-      document.getElementById('formCategory').addEventListener('change', () => updateSubcategorySelect('formCategory', 'formSubcategory'));
+      document.getElementById('formCategory').addEventListener('change', () => {
+        syncCategoryToOwnerAndSub('formCategory', 'formOwner', 'formSubcategory');
+      });
       document.getElementById('editTxPayMode').addEventListener('change', () => updateMethodOptions('editTxPayMode', 'editTxMethodName'));
-      document.getElementById('editTxCategory').addEventListener('change', () => updateSubcategorySelect('editTxCategory', 'editTxSubcategory'));
+      document.getElementById('editTxCategory').addEventListener('change', () => {
+        syncCategoryToOwnerAndSub('editTxCategory', 'editTxOwner', 'editTxSubcategory');
+      });
 
       document.getElementById('txMainForm').addEventListener('submit', e => {
         e.preventDefault();
+        let ownerVal = document.getElementById('formOwner').value;
+        let catVal = document.getElementById('formCategory').value;
+        if (currentFormType === 'EXPENSE') {
+          if (ownerVal === '첫째' || ownerVal === '둘째') catVal = ownerVal;
+          else if (catVal === '첫째' || catVal === '둘째') ownerVal = catVal;
+        }
         const newTx = {
           id: 't_' + Date.now(),
           date: document.getElementById('formDate').value,
           type: currentFormType,
-          owner: document.getElementById('formOwner').value,
+          owner: ownerVal,
           payMode: document.getElementById('formPayMode').value,
           methodName: document.getElementById('formMethodName').value,
-          category: document.getElementById('formCategory').value,
+          category: catVal,
           subcategory: document.getElementById('formSubcategory').value,
           amount: parseCommaNumber(document.getElementById('formAmount').value),
           title: document.getElementById('formTitle').value.trim()
@@ -3424,6 +3504,7 @@ service cloud.firestore {
       document.getElementById('btnOpenQuickAddModal').addEventListener('click', () => openEditTxModal(null));
       document.getElementById('btnBabyQuickAdd').addEventListener('click', () => {
         openEditTxModal(null);
+        document.getElementById('editTxOwner').value = '첫째';
         document.getElementById('editTxCategory').value = '첫째';
         updateSubcategorySelect('editTxCategory', 'editTxSubcategory');
       });
@@ -3434,14 +3515,21 @@ service cloud.firestore {
       document.getElementById('txModalForm').addEventListener('submit', e => {
         e.preventDefault();
         const id = document.getElementById('editTxId').value;
+        const txTypeVal = document.getElementById('editTxType').value;
+        let ownerVal = document.getElementById('editTxOwner').value;
+        let catVal = document.getElementById('editTxCategory').value;
+        if (txTypeVal === 'EXPENSE') {
+          if (ownerVal === '첫째' || ownerVal === '둘째') catVal = ownerVal;
+          else if (catVal === '첫째' || catVal === '둘째') ownerVal = catVal;
+        }
         const payload = {
           id: id || ('t_' + Date.now()),
-          type: document.getElementById('editTxType').value,
+          type: txTypeVal,
           date: document.getElementById('editTxDate').value,
-          owner: document.getElementById('editTxOwner').value,
+          owner: ownerVal,
           payMode: document.getElementById('editTxPayMode').value,
           methodName: document.getElementById('editTxMethodName').value,
-          category: document.getElementById('editTxCategory').value,
+          category: catVal,
           subcategory: document.getElementById('editTxSubcategory').value,
           amount: parseCommaNumber(document.getElementById('editTxAmount').value),
           title: document.getElementById('editTxTitle').value.trim()
