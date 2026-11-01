@@ -337,11 +337,17 @@
       width: 47% !important;
     }
     body.is-mobile-view #monthlyHistoryTableBody tr td:nth-child(7) {
-      width: 70% !important;
+      width: 100% !important;
       color: #64748b !important;
     }
     body.is-mobile-view #monthlyHistoryTableBody tr td:nth-child(8) {
-      margin-left: auto !important;
+      width: 100% !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+      gap: 8px !important;
+      border-top: 1px dashed #e2e8f0 !important;
+      padding-top: 6px !important;
+      margin-top: 4px !important;
     }
   </style>
 </head>
@@ -398,7 +404,7 @@
               패밀리 포켓 <span class="text-xs font-semibold text-indigo-600">Family Pocket</span>
             </h1>
             <span id="headerMonthBadge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
-              2025년 5월
+              2026년 11월
             </span>
             <button type="button" id="cloudSyncBadge" onclick="event.stopPropagation();" class="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold border border-amber-200 hover:bg-amber-100 transition flex items-center gap-1" title="클릭하여 실시간 클라우드 동기화 상태 및 규칙 확인">
               <span id="cloudSyncDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
@@ -599,7 +605,7 @@
       <!-- Recent Transactions Table on Dashboard -->
       <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold text-slate-900">🕒 최근 등록된 수입/지출 내역 (즉시 수정·삭제 가능)</h3>
+          <h3 class="text-sm font-bold text-slate-900">🕒 최근 등록된 수입/지출 내역</h3>
           <button type="button" id="btnGoAllTx" class="text-xs font-bold text-indigo-600 hover:underline">전체 내역 보기 →</button>
         </div>
         <div class="overflow-x-auto">
@@ -659,6 +665,31 @@
         </div>
       </div>
 
+      <!-- Monthly Chart Paging & Sliding Navigator -->
+      <div class="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-extrabold text-slate-800 whitespace-nowrap">📅 추이 차트 구간</span>
+          <span id="monthlyChartRangeBadge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 whitespace-nowrap">
+            2026-11
+          </span>
+        </div>
+        <div class="flex items-center gap-1.5 ml-auto flex-nowrap">
+          <select id="monthlyChartWindowSize" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 whitespace-nowrap shrink-0">
+            <option value="4">4개월씩</option>
+            <option value="6" selected>6개월씩</option>
+            <option value="12">12개월씩</option>
+            <option value="ALL">전체 보기</option>
+          </select>
+          <button type="button" id="btnChartPrevMonth" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 text-xs font-extrabold disabled:opacity-40 whitespace-nowrap shrink-0" title="이전 달 구간으로 넘기기">
+            ◀ 이전
+          </button>
+          <span id="monthlyChartPageInfo" class="text-[11px] font-mono font-bold text-slate-600 px-1 whitespace-nowrap shrink-0">1 / 1</span>
+          <button type="button" id="btnChartNextMonth" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 text-xs font-extrabold disabled:opacity-40 whitespace-nowrap shrink-0" title="다음 달 구간으로 넘기기">
+            다음 ▶
+          </button>
+        </div>
+      </div>
+
       <!-- Monthly Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
         <div class="lg:col-span-7 bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
@@ -683,7 +714,7 @@
 
       <!-- Monthly Comparison Table -->
       <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-        <h3 class="text-sm font-bold text-slate-900">🗓️ 월별 상세 비교표 (클릭하여 수정 가능)</h3>
+        <h3 class="text-sm font-bold text-slate-900">🗓️ 월별 상세 비교표</h3>
         <div class="overflow-x-auto">
           <table id="monthlyComparisonTable" class="w-full text-xs border-collapse">
             <thead>
@@ -796,7 +827,7 @@
             </div>
             <div id="recurringSummaryList" class="space-y-1 text-[11px] text-slate-600 max-h-36 overflow-y-auto"></div>
             <div class="flex items-center gap-2 pt-1">
-              <input type="month" id="recurringTargetMonth" value="2025-05" class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-bold">
+              <input type="month" id="recurringTargetMonth" value="2026-11" class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-bold">
               <button type="button" id="btnApplyRecurringBatch" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">
                 ⚡ 고정내역 일괄 등록
               </button>
@@ -1616,7 +1647,7 @@ service cloud.firestore {
     let CATEGORY_MAP = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
 
     const INITIAL_PROFILE = {
-      monthLabel: '2025년 5월',
+      monthLabel: '2026년 11월',
       husband: '남편',
       wife: '아내',
       child1Name: '하준',
@@ -1635,27 +1666,22 @@ service cloud.firestore {
     ];
 
     const INITIAL_TRANSACTIONS = [
-      { id: 't1', date: '2025-05-01', type: 'INCOME', owner: '남편', payMode: 'CASH', methodName: '급여통장', category: '수입', subcategory: '정기 급여', title: '남편 5월 급여 실수령', amount: 4200000 },
-      { id: 't2', date: '2025-05-01', type: 'INCOME', owner: '아내', payMode: 'CASH', methodName: '급여통장', category: '수입', subcategory: '정기 급여', title: '아내 5월 급여 실수령', amount: 3600000 },
-      { id: 't3', date: '2025-05-25', type: 'INCOME', owner: '정부지원금', payMode: 'CASH', methodName: '행복출산계좌', category: '수입', subcategory: '부모급여/아동수당', title: '17개월 부모급여(50만)+아동수당(10만)', amount: 600000 },
-      { id: 't4', date: '2025-05-03', type: 'EXPENSE', owner: '가족공통', payMode: 'CASH', methodName: '자동이체', category: '고정지출', subcategory: '주거비/대출이자', title: '주택담보대출 원리금', amount: 1150000 },
-      { id: 't5', date: '2025-05-05', type: 'EXPENSE', owner: '가족공통', payMode: 'CARD', methodName: '국민 탄탄대로 올쇼핑', category: '고정지출', subcategory: '아파트 관리비', title: '아파트 관리비 및 도시가스', amount: 280000 },
-      { id: 't6', date: '2025-05-07', type: 'EXPENSE', owner: '첫째', payMode: 'CARD', methodName: '신한 미스터라이프', category: '첫째', subcategory: '기저귀/위생용품', title: '하기스 팬티기저귀 4박스 & 물티슈', amount: 148000 },
-      { id: 't7', date: '2025-05-09', type: 'EXPENSE', owner: '첫째', payMode: 'CARD', methodName: '신한 미스터라이프', category: '첫째', subcategory: '분유/유아식/간식', title: '한우 유아식 반찬 및 아기 치즈', amount: 135000 },
-      { id: 't8', date: '2025-05-11', type: 'EXPENSE', owner: '첫째', payMode: 'CARD', methodName: '현대 ZERO 에디션', category: '첫째', subcategory: '문센/키즈카페/체험', title: '오감발달 문화센터 여름학기 등록', amount: 120000 },
-      { id: 't9', date: '2025-05-12', type: 'EXPENSE', owner: '둘째', payMode: 'CARD', methodName: '삼성 iD ON (국민행복)', category: '둘째', subcategory: '소아과/약국', title: '산부인과 22주 정밀초음파 및 철분제', amount: 115000 },
-      { id: 't10', date: '2025-05-14', type: 'EXPENSE', owner: '둘째', payMode: 'CARD', methodName: '국민 탄탄대로 올쇼핑', category: '둘째', subcategory: '기저귀/위생용품', title: '신생아 밤부 베냇저고리 & 천기저귀 세트', amount: 165000 },
-      { id: 't11', date: '2025-05-16', type: 'EXPENSE', owner: '가족공통', payMode: 'CARD', methodName: '국민 탄탄대로 올쇼핑', category: '변동지출', subcategory: '식비/장보기', title: '트레이더스 주말 대량 장보기', amount: 390000 },
-      { id: 't12', date: '2025-05-18', type: 'EXPENSE', owner: '남편', payMode: 'CASH', methodName: '계좌이체', category: '부부 개인', subcategory: '남편 용돈', title: '남편 5월 정기 용돈', amount: 300000 },
-      { id: 't13', date: '2025-05-18', type: 'EXPENSE', owner: '아내', payMode: 'CASH', methodName: '계좌이체', category: '부부 개인', subcategory: '아내 용돈', title: '아내 5월 정기 용돈', amount: 300000 }
+      { id: 't1', date: '2026-11-01', type: 'INCOME', owner: '남편', payMode: 'CASH', methodName: '급여통장', category: '수입', subcategory: '정기 급여', title: '남편 11월 급여 실수령', amount: 4200000 },
+      { id: 't2', date: '2026-11-01', type: 'INCOME', owner: '아내', payMode: 'CASH', methodName: '급여통장', category: '수입', subcategory: '정기 급여', title: '아내 11월 급여 실수령', amount: 3600000 },
+      { id: 't3', date: '2026-11-25', type: 'INCOME', owner: '정부지원금', payMode: 'CASH', methodName: '행복출산계좌', category: '수입', subcategory: '부모급여/아동수당', title: '17개월 부모급여(50만)+아동수당(10만)', amount: 600000 },
+      { id: 't4', date: '2026-11-03', type: 'EXPENSE', owner: '가족공통', payMode: 'CASH', methodName: '자동이체', category: '고정지출', subcategory: '주거비/대출이자', title: '주택담보대출 원리금', amount: 1150000 },
+      { id: 't5', date: '2026-11-05', type: 'EXPENSE', owner: '가족공통', payMode: 'CARD', methodName: '국민 탄탄대로 올쇼핑', category: '고정지출', subcategory: '아파트 관리비', title: '아파트 관리비 및 도시가스', amount: 280000 },
+      { id: 't6', date: '2026-11-07', type: 'EXPENSE', owner: '첫째', payMode: 'CARD', methodName: '신한 미스터라이프', category: '첫째', subcategory: '기저귀/위생용품', title: '하기스 팬티기저귀 4박스 & 물티슈', amount: 148000 },
+      { id: 't7', date: '2026-11-09', type: 'EXPENSE', owner: '첫째', payMode: 'CARD', methodName: '신한 미스터라이프', category: '첫째', subcategory: '분유/유아식/간식', title: '한우 유아식 반찬 및 아기 치즈', amount: 135000 },
+      { id: 't8', date: '2026-11-11', type: 'EXPENSE', owner: '첫째', payMode: 'CARD', methodName: '현대 ZERO 에디션', category: '첫째', subcategory: '문센/키즈카페/체험', title: '오감발달 문화센터 가을학기 등록', amount: 120000 },
+      { id: 't9', date: '2026-11-12', type: 'EXPENSE', owner: '둘째', payMode: 'CARD', methodName: '삼성 iD ON (국민행복)', category: '둘째', subcategory: '소아과/약국', title: '산부인과 22주 정밀초음파 및 철분제', amount: 115000 },
+      { id: 't10', date: '2026-11-14', type: 'EXPENSE', owner: '둘째', payMode: 'CARD', methodName: '국민 탄탄대로 올쇼핑', category: '둘째', subcategory: '기저귀/위생용품', title: '신생아 밤부 베냇저고리 & 천기저귀 세트', amount: 165000 },
+      { id: 't11', date: '2026-11-16', type: 'EXPENSE', owner: '가족공통', payMode: 'CARD', methodName: '국민 탄탄대로 올쇼핑', category: '변동지출', subcategory: '식비/장보기', title: '트레이더스 주말 대량 장보기', amount: 390000 },
+      { id: 't12', date: '2026-11-18', type: 'EXPENSE', owner: '남편', payMode: 'CASH', methodName: '계좌이체', category: '부부 개인', subcategory: '남편 용돈', title: '남편 11월 정기 용돈', amount: 300000 },
+      { id: 't13', date: '2026-11-18', type: 'EXPENSE', owner: '아내', payMode: 'CASH', methodName: '계좌이체', category: '부부 개인', subcategory: '아내 용돈', title: '아내 11월 정기 용돈', amount: 300000 }
     ];
 
-    const INITIAL_MONTHLY_HISTORY = [
-      { month: '2025-01', income: 8200000, expense: 4150000, card: 2650000, first: 390000, second: 85000, memo: '연초 가족모임 및 정기검진' },
-      { month: '2025-02', income: 8400000, expense: 3980000, card: 2480000, first: 360000, second: 140000, memo: '태아보험 가입 및 1차 기형아검사' },
-      { month: '2025-03', income: 8400000, expense: 4420000, card: 2890000, first: 410000, second: 520000, memo: '산후조리원 예약금 결제' },
-      { month: '2025-04', income: 8400000, expense: 4050000, card: 2550000, first: 380000, second: 210000, memo: '유아식 식단 확장 및 출산용품 리스트업' }
-    ];
+    const INITIAL_MONTHLY_HISTORY = [];
 
     const INITIAL_BUDGETS = {
       '고정지출': 1800000,
@@ -1684,12 +1710,27 @@ service cloud.firestore {
     let stateCards = JSON.parse(JSON.stringify(INITIAL_CARDS));
     let stateTransactions = JSON.parse(JSON.stringify(INITIAL_TRANSACTIONS));
     let stateMonthlyHistory = JSON.parse(JSON.stringify(INITIAL_MONTHLY_HISTORY));
+    let stateDeletedMonths = ['2025-01', '2025-02', '2025-03', '2025-04'];
     let stateBudgets = { ...INITIAL_BUDGETS };
     let stateRecurring = JSON.parse(JSON.stringify(INITIAL_RECURRING));
     let stateVouchers = JSON.parse(JSON.stringify(INITIAL_VOUCHERS));
 
     let currentFormType = 'EXPENSE';
     let monthlySubTrendMode = 'BABY';
+    let monthlyChartOffset = 0;
+    let monthlyChartWindowSize = 6;
+
+    function getTodayDateString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getCurrentYearMonth() {
+      return getTodayDateString().slice(0, 7);
+    }
     let draggedCardIndex = null;
     let selectedSwapCardIndex = null;
     let mobileFontScale = Number(localStorage.getItem('fp_mobile_font_scale')) || 1.0;
@@ -1731,12 +1772,32 @@ service cloud.firestore {
       window.__toastTimer = setTimeout(() => box.classList.add('hidden'), 2600);
     }
 
+    function sanitizeLegacyMonths() {
+      const legacyRemove = ['2025-01', '2025-02', '2025-03', '2025-04'];
+      legacyRemove.forEach(ym => {
+        if (!stateDeletedMonths.includes(ym)) stateDeletedMonths.push(ym);
+      });
+      stateMonthlyHistory = (stateMonthlyHistory || []).filter(m => !legacyRemove.includes(m.month) && !stateDeletedMonths.includes(m.month));
+      // Migrate initial demo transactions (t1~t13) from 2025-05 to 2026-11 so 2026-11 appears first
+      const demoIds = new Set(['t1','t2','t3','t4','t5','t6','t7','t8','t9','t10','t11','t12','t13']);
+      (stateTransactions || []).forEach(t => {
+        if (demoIds.has(t.id) && typeof t.date === 'string' && t.date.startsWith('2025-05-')) {
+          t.date = '2026-11-' + t.date.slice(8);
+          if (typeof t.title === 'string') t.title = t.title.replace('5월', '11월');
+        }
+      });
+      if (stateProfile && stateProfile.monthLabel === '2025년 5월') {
+        stateProfile.monthLabel = '2026년 11월';
+      }
+    }
+
     function buildFullBackupPayload() {
       return {
         profile: stateProfile,
         cards: stateCards,
         transactions: stateTransactions,
         monthlyHistory: stateMonthlyHistory,
+        deletedMonths: stateDeletedMonths,
         budgets: stateBudgets,
         recurring: stateRecurring,
         vouchers: stateVouchers,
@@ -1766,7 +1827,9 @@ service cloud.firestore {
         if (Array.isArray(data.cards) && data.cards.length) stateCards = data.cards;
         if (Array.isArray(data.transactions)) stateTransactions = data.transactions;
         if (Array.isArray(data.monthlyHistory)) stateMonthlyHistory = data.monthlyHistory;
+        if (Array.isArray(data.deletedMonths)) stateDeletedMonths = data.deletedMonths;
         if (data.budgets) stateBudgets = { ...INITIAL_BUDGETS, ...data.budgets };
+        sanitizeLegacyMonths();
         if (Array.isArray(data.recurring)) stateRecurring = data.recurring;
         if (Array.isArray(data.vouchers)) stateVouchers = data.vouchers;
         if (data.categories) CATEGORY_MAP = data.categories;
@@ -1887,7 +1950,9 @@ service cloud.firestore {
         if (Array.isArray(data.cards)) stateCards = data.cards;
         if (Array.isArray(data.transactions)) stateTransactions = data.transactions;
         if (Array.isArray(data.monthlyHistory)) stateMonthlyHistory = data.monthlyHistory;
+        if (Array.isArray(data.deletedMonths)) stateDeletedMonths = data.deletedMonths;
         if (data.budgets) stateBudgets = { ...INITIAL_BUDGETS, ...data.budgets };
+        sanitizeLegacyMonths();
         if (Array.isArray(data.recurring)) stateRecurring = data.recurring;
         if (Array.isArray(data.vouchers)) stateVouchers = data.vouchers;
         if (data.categories) CATEGORY_MAP = data.categories;
@@ -2019,6 +2084,10 @@ service cloud.firestore {
 
     // Tab Navigation
     function switchTab(tabId) {
+      if (tabId === 'transactions') {
+        const fd = document.getElementById('formDate');
+        if (fd) fd.value = getTodayDateString();
+      }
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
       const target = document.getElementById(`tab-${tabId}`);
       if (target) target.classList.remove('hidden');
@@ -2349,16 +2418,19 @@ service cloud.firestore {
 
     // Monthly Cumulative Tab
     function getMergedMonthlyDataset() {
+      sanitizeLegacyMonths();
       const map = {};
       stateMonthlyHistory.forEach(m => {
-        map[m.month] = { ...m };
+        if (!stateDeletedMonths.includes(m.month)) {
+          map[m.month] = { ...m };
+        }
       });
 
       // Aggregate live transactions by YYYY-MM
       const txByMonth = {};
       stateTransactions.forEach(t => {
         const ym = (t.date || '').slice(0, 7);
-        if (!ym) return;
+        if (!ym || stateDeletedMonths.includes(ym)) return;
         if (!txByMonth[ym]) txByMonth[ym] = { month: ym, income: 0, expense: 0, card: 0, first: 0, second: 0, memo: '가계부 실시간 집계' };
         if (t.type === 'INCOME') txByMonth[ym].income += t.amount;
         else {
@@ -2376,8 +2448,23 @@ service cloud.firestore {
         }
       });
 
+      // Ensure 2026-11 is present as the starting baseline if nothing exists and it wasn't explicitly deleted
+      if (Object.keys(map).length === 0 && !stateDeletedMonths.includes('2026-11')) {
+        map['2026-11'] = { month: '2026-11', income: 0, expense: 0, card: 0, first: 0, second: 0, memo: '2026년 11월 시작' };
+      }
+
       return Object.values(map).sort((a, b) => a.month.localeCompare(b.month));
     }
+
+    window.deleteMonthlyEntry = function(ym) {
+      stateMonthlyHistory = stateMonthlyHistory.filter(m => m.month !== ym);
+      if (!stateDeletedMonths.includes(ym)) {
+        stateDeletedMonths.push(ym);
+      }
+      saveState();
+      renderAll();
+      showToast(`${ym} 월별 데이터가 삭제되었습니다.`);
+    };
 
     function renderMonthlyFlowTab() {
       const rows = getMergedMonthlyDataset();
@@ -2409,22 +2496,53 @@ service cloud.firestore {
         const rate = r.income > 0 ? Math.round((sav / r.income) * 100) : 0;
         return `
           <tr class="hover:bg-slate-50">
-            <td class="py-2.5 px-3 font-extrabold text-slate-900">${r.month}</td>
-            <td class="py-2.5 px-3 text-right font-bold text-emerald-700">${formatKRW(r.income)}</td>
-            <td class="py-2.5 px-3 text-right font-bold text-rose-600">${formatKRW(r.expense)}</td>
-            <td class="py-2.5 px-3 text-right font-extrabold text-indigo-700">${formatKRW(sav)} (${rate}%)</td>
-            <td class="py-2.5 px-3 text-right text-sky-700 font-semibold">${formatKRW(r.first)}</td>
-            <td class="py-2.5 px-3 text-right text-amber-700 font-semibold">${formatKRW(r.second)}</td>
+            <td class="py-2.5 px-3 font-extrabold text-slate-900 whitespace-nowrap">${r.month}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-emerald-700 whitespace-nowrap">${formatKRW(r.income)}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-rose-600 whitespace-nowrap">${formatKRW(r.expense)}</td>
+            <td class="py-2.5 px-3 text-right font-extrabold text-indigo-700 whitespace-nowrap">${formatKRW(sav)} (${rate}%)</td>
+            <td class="py-2.5 px-3 text-right text-sky-700 font-semibold whitespace-nowrap">${formatKRW(r.first)}</td>
+            <td class="py-2.5 px-3 text-right text-amber-700 font-semibold whitespace-nowrap">${formatKRW(r.second)}</td>
             <td class="py-2.5 px-3 text-slate-500">${r.memo || '-'}</td>
-            <td class="py-2.5 px-3 text-right">
-              <button type="button" onclick="openMonthlyEdit('${r.month}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-indigo-700 font-bold">✏️ 수정</button>
+            <td class="py-2.5 px-3 text-right whitespace-nowrap">
+              <div class="inline-flex items-center justify-end gap-1 flex-nowrap">
+                <button type="button" onclick="openMonthlyEdit('${r.month}')" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-indigo-700 font-bold whitespace-nowrap shrink-0">✏️ 수정</button>
+                <button type="button" onclick="deleteMonthlyEntry('${r.month}')" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 text-rose-600 font-bold whitespace-nowrap shrink-0">삭제</button>
+              </div>
             </td>
           </tr>
         `;
       }).join('');
 
+      // Sliding window pagination for charts
+      const totalMonths = rows.length;
+      const winSize = monthlyChartWindowSize === 'ALL' ? Math.max(1, totalMonths) : Number(monthlyChartWindowSize) || 6;
+      const maxOffset = Math.max(0, totalMonths - winSize);
+      if (monthlyChartOffset > maxOffset) monthlyChartOffset = maxOffset;
+      if (monthlyChartOffset < 0) monthlyChartOffset = 0;
+
+      const chartRows = monthlyChartWindowSize === 'ALL'
+        ? rows
+        : rows.slice(monthlyChartOffset, monthlyChartOffset + winSize);
+
+      const rangeBadge = document.getElementById('monthlyChartRangeBadge');
+      const pageInfo = document.getElementById('monthlyChartPageInfo');
+      const prevBtn = document.getElementById('btnChartPrevMonth');
+      const nextBtn = document.getElementById('btnChartNextMonth');
+
+      if (rangeBadge) {
+        if (chartRows.length === 0) rangeBadge.textContent = '데이터 없음';
+        else if (chartRows.length === 1) rangeBadge.textContent = chartRows[0].month;
+        else rangeBadge.textContent = `${chartRows[0].month} ~ ${chartRows[chartRows.length - 1].month}`;
+      }
+      if (pageInfo) {
+        if (totalMonths === 0) pageInfo.textContent = '0 / 0';
+        else pageInfo.textContent = `${monthlyChartOffset + 1}-${Math.min(totalMonths, monthlyChartOffset + chartRows.length)} / ${totalMonths}개월`;
+      }
+      if (prevBtn) prevBtn.disabled = monthlyChartOffset <= 0;
+      if (nextBtn) nextBtn.disabled = monthlyChartOffset >= maxOffset;
+
       // Charts
-      const labels = rows.map(r => r.month);
+      const labels = chartRows.map(r => r.month);
       const ctx1 = document.getElementById('monthlyFlowChartCanvas');
       if (ctx1) {
         if (monthlyFlowChartInstance) monthlyFlowChartInstance.destroy();
@@ -2433,9 +2551,9 @@ service cloud.firestore {
           data: {
             labels,
             datasets: [
-              { label: '총수입', data: rows.map(r => r.income), backgroundColor: '#10b981', borderRadius: 6 },
-              { label: '총지출', data: rows.map(r => r.expense), backgroundColor: '#f43f5e', borderRadius: 6 },
-              { label: '순저축액', data: rows.map(r => r.income - r.expense), type: 'line', borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.3, borderWidth: 2.5 }
+              { label: '총수입', data: chartRows.map(r => r.income), backgroundColor: '#10b981', borderRadius: 6 },
+              { label: '총지출', data: chartRows.map(r => r.expense), backgroundColor: '#f43f5e', borderRadius: 6 },
+              { label: '순저축액', data: chartRows.map(r => r.income - r.expense), type: 'line', borderColor: '#4f46e5', backgroundColor: '#4f46e5', tension: 0.3, borderWidth: 2.5 }
             ]
           },
           options: { responsive: true, maintainAspectRatio: false }
@@ -2447,12 +2565,12 @@ service cloud.firestore {
         if (monthlySubTrendChartInstance) monthlySubTrendChartInstance.destroy();
         const datasets = monthlySubTrendMode === 'BABY'
           ? [
-              { label: `첫째 (${stateProfile.child1Name})`, data: rows.map(r => r.first), backgroundColor: '#0ea5e9', borderRadius: 5 },
-              { label: `둘째 (${stateProfile.child2Name})`, data: rows.map(r => r.second), backgroundColor: '#f59e0b', borderRadius: 5 }
+              { label: `첫째 (${stateProfile.child1Name})`, data: chartRows.map(r => r.first), backgroundColor: '#0ea5e9', borderRadius: 5 },
+              { label: `둘째 (${stateProfile.child2Name})`, data: chartRows.map(r => r.second), backgroundColor: '#f59e0b', borderRadius: 5 }
             ]
           : [
-              { label: '카드 지출', data: rows.map(r => r.card), backgroundColor: '#4f46e5', borderRadius: 5 },
-              { label: '현금 지출', data: rows.map(r => Math.max(0, r.expense - r.card)), backgroundColor: '#94a3b8', borderRadius: 5 }
+              { label: '카드 지출', data: chartRows.map(r => r.card), backgroundColor: '#4f46e5', borderRadius: 5 },
+              { label: '현금 지출', data: chartRows.map(r => Math.max(0, r.expense - r.card)), backgroundColor: '#94a3b8', borderRadius: 5 }
             ];
         monthlySubTrendChartInstance = new Chart(ctx2, {
           type: 'bar',
@@ -2479,21 +2597,21 @@ service cloud.firestore {
         return `
           <div draggable="true" data-card-index="${idx}"
                class="card-item bg-white rounded-2xl p-4 border border-slate-200/90 shadow-xs space-y-3 transition cursor-grab ${isSwapSel ? 'card-swap-selected' : ''}">
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-y-2 gap-x-2">
+              <div class="flex items-center gap-1.5 min-w-0 flex-nowrap">
                 <button type="button" onclick="handleCardSwapClick(${idx})"
-                        class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-700 font-mono text-xs font-extrabold"
+                        class="inline-flex items-center px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-100 text-slate-700 font-mono text-xs font-extrabold whitespace-nowrap shrink-0"
                         title="클릭하여 다른 카드와 위치 맞바꾸기">
                   ⠿ #${idx + 1}
                 </button>
-                <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold">${c.owner}</span>
-                <h3 class="text-sm font-extrabold text-slate-900">${c.name}</h3>
+                <span class="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold whitespace-nowrap shrink-0">${c.owner}</span>
+                <h3 class="text-sm font-extrabold text-slate-900 whitespace-nowrap truncate">${c.name}</h3>
               </div>
-              <div class="flex items-center gap-1">
-                <button type="button" onclick="moveCardOrder(${idx}, -1)" class="px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-xs font-bold" title="앞으로 이동">◀</button>
-                <button type="button" onclick="moveCardOrder(${idx}, 1)" class="px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-xs font-bold" title="뒤로 이동">▶</button>
-                <button type="button" onclick="openCardEditModal('${c.id}')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-indigo-700 text-xs font-bold">✏️ 수정</button>
-                <button type="button" onclick="deleteCard('${c.id}')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 text-rose-600 text-xs font-bold">삭제</button>
+              <div class="flex items-center gap-1 flex-nowrap shrink-0 ml-auto">
+                <button type="button" onclick="moveCardOrder(${idx}, -1)" class="inline-flex items-center justify-center px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-xs font-bold whitespace-nowrap shrink-0" title="앞으로 이동">◀</button>
+                <button type="button" onclick="moveCardOrder(${idx}, 1)" class="inline-flex items-center justify-center px-1.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-xs font-bold whitespace-nowrap shrink-0" title="뒤로 이동">▶</button>
+                <button type="button" onclick="openCardEditModal('${c.id}')" class="inline-flex items-center px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-indigo-700 text-xs font-bold whitespace-nowrap shrink-0">✏️ 수정</button>
+                <button type="button" onclick="deleteCard('${c.id}')" class="inline-flex items-center px-2 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 text-rose-600 text-xs font-bold whitespace-nowrap shrink-0">삭제</button>
               </div>
             </div>
 
@@ -2827,9 +2945,10 @@ service cloud.firestore {
 
       // Date / time
       const mdMatch = text.match(/(\d{2})\/(\d{2})\s+(\d{2}:\d{2})/);
+      const curYear = new Date().getFullYear();
       const timestamp = mdMatch
-        ? `2025-${mdMatch[1]}-${mdMatch[2]} ${mdMatch[3]}:00`
-        : '2025-05-20 12:00:00';
+        ? `${curYear}-${mdMatch[1]}-${mdMatch[2]} ${mdMatch[3]}:00`
+        : `${getTodayDateString()} 12:00:00`;
 
       // Rule 1: 산부인과, 조리원, 베이비 -> 출산준비(태아) or 육아(17개월)
       let suggested_category = '식비';
@@ -2890,7 +3009,7 @@ service cloud.firestore {
 
       return {
         id: 't_' + Date.now(),
-        date: (parsed.timestamp || '2025-05-20').slice(0, 10),
+        date: (parsed.timestamp || getTodayDateString()).slice(0, 10),
         type: parsed.transaction_type || 'EXPENSE',
         owner,
         payMode: parsed.payment_method || 'CARD',
@@ -2944,7 +3063,7 @@ service cloud.firestore {
       } else {
         document.getElementById('editTxId').value = '';
         document.getElementById('editTxType').value = 'EXPENSE';
-        document.getElementById('editTxDate').value = '2025-05-20';
+        document.getElementById('editTxDate').value = getTodayDateString();
         document.getElementById('editTxAmount').value = '';
         document.getElementById('editTxTitle').value = '';
       }
@@ -3129,7 +3248,7 @@ service cloud.firestore {
 
       document.getElementById('profileEditForm').addEventListener('submit', e => {
         e.preventDefault();
-        stateProfile.monthLabel = document.getElementById('profMonthLabel').value.trim() || '2025년 5월';
+        stateProfile.monthLabel = document.getElementById('profMonthLabel').value.trim() || '2026년 11월';
         stateProfile.husband = document.getElementById('profHusband').value.trim() || '남편';
         stateProfile.wife = document.getElementById('profWife').value.trim() || '아내';
         stateProfile.child1Name = document.getElementById('profChild1Name').value.trim() || '첫째';
@@ -3144,7 +3263,8 @@ service cloud.firestore {
       });
 
       // Main Transaction Form
-      document.getElementById('formDate').value = '2025-05-20';
+      document.getElementById('formDate').value = getTodayDateString();
+      document.getElementById('recurringTargetMonth').value = getCurrentYearMonth();
       document.getElementById('btnFormTypeExpense').addEventListener('click', () => {
         currentFormType = 'EXPENSE';
         document.getElementById('btnFormTypeExpense').className = 'py-2 rounded-lg text-xs font-extrabold bg-rose-600 text-white shadow-xs transition';
@@ -3178,6 +3298,7 @@ service cloud.firestore {
           title: document.getElementById('formTitle').value.trim()
         };
         stateTransactions.unshift(newTx);
+        document.getElementById('formDate').value = getTodayDateString();
         document.getElementById('formAmount').value = '';
         document.getElementById('formTitle').value = '';
         saveState();
@@ -3312,13 +3433,47 @@ service cloud.firestore {
         document.getElementById('btnTrendBaby').className = 'px-2 py-1 rounded-md font-semibold text-slate-600';
         renderMonthlyFlowTab();
       });
-      document.getElementById('btnOpenMonthlyModal').addEventListener('click', () => openMonthlyEdit('2025-05'));
+      document.getElementById('btnOpenMonthlyModal').addEventListener('click', () => openMonthlyEdit(getCurrentYearMonth()));
+      document.getElementById('monthlyChartWindowSize').addEventListener('change', (e) => {
+        monthlyChartWindowSize = e.target.value;
+        monthlyChartOffset = 0;
+        renderMonthlyFlowTab();
+      });
+      document.getElementById('btnChartPrevMonth').addEventListener('click', () => {
+        if (monthlyChartOffset > 0) {
+          monthlyChartOffset--;
+          renderMonthlyFlowTab();
+        }
+      });
+      document.getElementById('btnChartNextMonth').addEventListener('click', () => {
+        monthlyChartOffset++;
+        renderMonthlyFlowTab();
+      });
+      // Touch swipe navigation on monthly charts
+      ['monthlyFlowChartCanvas', 'monthlySubTrendChartCanvas'].forEach(canvasId => {
+        const cEl = document.getElementById(canvasId);
+        if (!cEl) return;
+        let touchStartX = null;
+        cEl.addEventListener('touchstart', (e) => {
+          if (e.touches && e.touches.length === 1) touchStartX = e.touches[0].clientX;
+        }, { passive: true });
+        cEl.addEventListener('touchend', (e) => {
+          if (touchStartX === null || !e.changedTouches || !e.changedTouches.length) return;
+          const dx = e.changedTouches[0].clientX - touchStartX;
+          touchStartX = null;
+          if (Math.abs(dx) > 40) {
+            if (dx < 0) { monthlyChartOffset++; renderMonthlyFlowTab(); }
+            else if (dx > 0 && monthlyChartOffset > 0) { monthlyChartOffset--; renderMonthlyFlowTab(); }
+          }
+        }, { passive: true });
+      });
       ['btnCloseMonthlyModal', 'btnCancelMonthlyModal'].forEach(id => {
         document.getElementById(id).addEventListener('click', () => document.getElementById('monthlyModal').classList.add('hidden'));
       });
       document.getElementById('monthlyEditForm').addEventListener('submit', e => {
         e.preventDefault();
         const month = document.getElementById('mFormMonth').value;
+        stateDeletedMonths = stateDeletedMonths.filter(m => m !== month);
         const entry = {
           month,
           income: parseCommaNumber(document.getElementById('mFormIncome').value),
@@ -3453,7 +3608,7 @@ service cloud.firestore {
       });
 
       document.getElementById('btnApplyRecurringBatch').addEventListener('click', () => {
-        const ym = document.getElementById('recurringTargetMonth').value || '2025-05';
+        const ym = document.getElementById('recurringTargetMonth').value || getCurrentYearMonth();
         stateRecurring.forEach(r => {
           const dayStr = String(r.day).padStart(2, '0');
           stateTransactions.unshift({
@@ -3590,6 +3745,8 @@ service cloud.firestore {
         stateCards = JSON.parse(JSON.stringify(INITIAL_CARDS));
         stateTransactions = JSON.parse(JSON.stringify(INITIAL_TRANSACTIONS));
         stateMonthlyHistory = JSON.parse(JSON.stringify(INITIAL_MONTHLY_HISTORY));
+        stateDeletedMonths = ['2025-01', '2025-02', '2025-03', '2025-04'];
+        monthlyChartOffset = 0;
         stateBudgets = { ...INITIAL_BUDGETS };
         stateRecurring = JSON.parse(JSON.stringify(INITIAL_RECURRING));
         stateVouchers = JSON.parse(JSON.stringify(INITIAL_VOUCHERS));
