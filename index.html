@@ -2573,22 +2573,13 @@ service cloud.firestore {
       document.getElementById('txFilterCountText').textContent = `조건 일치 내역: 총 ${filtered.length}건`;
       document.getElementById('txFullTableBody').innerHTML = filtered.map(t => buildTransactionRowHtml(t)).join('');
 
-      // Recurring summary with inline Card / Cash selector
+      // Recurring summary (clean single-line layout; payment method is managed only in ⚙️ 정기항목 편집 modal)
       const recBox = document.getElementById('recurringSummaryList');
       if (recBox) {
         recBox.innerHTML = stateRecurring.map(r => `
-          <div class="flex flex-wrap items-center justify-between gap-1.5 py-1.5 border-b border-slate-100">
-            <div class="min-w-0">
-              <span class="font-bold text-slate-800">${r.day}일 · ${r.title}</span>
-              <span class="text-[10px] text-slate-400 ml-1">(${r.category})</span>
-            </div>
-            <div class="flex items-center gap-1.5 ml-auto shrink-0">
-              <select onchange="updateRecurringPayment('${r.id}', this.value)"
-                      class="rounded-lg border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-bold text-slate-700 max-w-[140px]">
-                ${buildRecurringMethodOptionsHtml(r.payMode, r.methodName)}
-              </select>
-              <span class="${r.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'} font-extrabold whitespace-nowrap">${formatKRW(r.amount)}</span>
-            </div>
+          <div class="flex items-center justify-between py-1 border-b border-slate-100">
+            <span class="truncate pr-2">매월 ${r.day}일 · <strong>${r.title}</strong> (${r.category})</span>
+            <span class="${r.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'} font-bold whitespace-nowrap shrink-0">${formatKRW(r.amount)}</span>
           </div>
         `).join('');
       }
